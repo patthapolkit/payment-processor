@@ -2,9 +2,9 @@ namespace PaymentProcessor.Core.Enums;
 
 public enum InvalidReason
 {
-    MissingFields,
-    InvalidAmount,
-    InvalidCurrency,
-    InvalidStatus,
-    InvalidTimestamp
+    MISSING_FIELDS,
+    INVALID_AMOUNT,
+    INVALID_CURRENCY,
+    INVALID_STATUS,
+    INVALID_TIMESTAMP
 }

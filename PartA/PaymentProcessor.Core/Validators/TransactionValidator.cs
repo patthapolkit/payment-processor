@@ -56,7 +56,7 @@ public class TransactionDtoValidator : AbstractValidator<TransactionDto>
 
     private static bool BeValidCurrency(string? currency)
     {
-        return currency != null && currency.Length == 3 && currency.All(char.IsLetter) && currency.All(char.IsUpper);
+        return currency != null && currency.Length == 3 && currency.All(c => char.IsLetter(c) && char.IsUpper(c));
     }
 
     private static bool BeValidStatus(string? status)
@@ -67,10 +67,6 @@ public class TransactionDtoValidator : AbstractValidator<TransactionDto>
     private static bool BeValidUtcTimestamp(string? timestamp)
     {
         if (timestamp == null) return false;
-
-        // Accept both with and without fractional seconds, but must end with Z
-        if (!timestamp.EndsWith("Z", StringComparison.Ordinal))
-            return false;
 
         return DateTime.TryParse(timestamp, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var result)
             && result.Kind == DateTimeKind.Utc;

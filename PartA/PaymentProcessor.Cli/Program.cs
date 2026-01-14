@@ -37,28 +37,61 @@ class Program
 
     private static void ProcessTransactions(FileInfo input, FileInfo output)
     {
-        var jsonContent = File.ReadAllText(input.FullName);
-
-        var options = new JsonSerializerOptions
+        try
         {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            PropertyNameCaseInsensitive = true
-        };
+            var jsonContent = File.ReadAllText(input.FullName);
 
-        var transactions = JsonSerializer.Deserialize<List<TransactionDto>>(jsonContent, options) ?? new List<TransactionDto>();
+            var options = new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                PropertyNameCaseInsensitive = true
+            };
 
-        var processor = new TransactionProcessorService();
-        var report = processor.Process(transactions);
+            List<TransactionDto> transactions;
+            try
+            {
+                transactions = JsonSerializer.Deserialize<List<TransactionDto>>(jsonContent, options) ?? new List<TransactionDto>();
+            }
+            catch (JsonException ex)
+            {
+                Console.Error.WriteLine($"Error: Invalid JSON format in input file: {ex.Message}");
+                Environment.Exit(1);
+                return;
+            }
 
-        var outputOptions = new JsonSerializerOptions
+            var processor = new TransactionProcessorService();
+            var report = processor.Process(transactions);
+
+            var outputOptions = new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                WriteIndented = true
+            };
+
+            var reportJson = JsonSerializer.Serialize(report, outputOptions);
+            File.WriteAllText(output.FullName, reportJson);
+
+            Console.WriteLine($"Report generated at {output.FullName}");
+        }
+        catch (FileNotFoundException ex)
         {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            WriteIndented = true
-        };
-
-        var reportJson = JsonSerializer.Serialize(report, outputOptions);
-        File.WriteAllText(output.FullName, reportJson);
-
-        Console.WriteLine($"Report generated at {output.FullName}");
+            Console.Error.WriteLine($"Error: Input file not found: {ex.FileName}");
+            Environment.Exit(1);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            Console.Error.WriteLine($"Error: Access denied to file: {ex.Message}");
+            Environment.Exit(1);
+        }
+        catch (IOException ex)
+        {
+            Console.Error.WriteLine($"Error: I/O error occurred: {ex.Message}");
+            Environment.Exit(1);
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Error: An unexpected error occurred: {ex.Message}");
+            Environment.Exit(1);
+        }
     }
 }

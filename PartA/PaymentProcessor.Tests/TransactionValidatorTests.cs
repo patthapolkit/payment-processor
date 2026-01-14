@@ -8,12 +8,12 @@ namespace PaymentProcessor.Tests;
 [TestFixture]
 public class TransactionValidatorTests
 {
-    private TransactionValidator _validator = null!;
+    private TransactionDtoValidator _validator = null!;
 
     [SetUp]
     public void Setup()
     {
-        _validator = new TransactionValidator();
+        _validator = new TransactionDtoValidator();
     }
 
     private static TransactionDto CreateValidDto() => new()
@@ -34,8 +34,6 @@ public class TransactionValidatorTests
         var result = _validator.Validate(transaction);
 
         result.IsValid.ShouldBeTrue();
-        result.Transaction.ShouldNotBeNull();
-        result.Transaction.TransactionId.ShouldBe("tx-001");
     }
 
     [TestCase(nameof(TransactionDto.TransactionId))]
@@ -52,7 +50,7 @@ public class TransactionValidatorTests
         var result = _validator.Validate(transaction);
 
         result.IsValid.ShouldBeFalse();
-        result.Reason.ShouldBe(InvalidReason.MISSING_FIELDS);
+        ((InvalidReason)result.Errors[0].CustomState).ShouldBe(InvalidReason.MISSING_FIELDS);
     }
 
     [Test]
@@ -63,7 +61,7 @@ public class TransactionValidatorTests
         var result = _validator.Validate(transaction);
 
         result.IsValid.ShouldBeFalse();
-        result.Reason.ShouldBe(InvalidReason.MISSING_FIELDS);
+        ((InvalidReason)result.Errors[0].CustomState).ShouldBe(InvalidReason.MISSING_FIELDS);
     }
 
     [TestCase(0)]
@@ -77,7 +75,7 @@ public class TransactionValidatorTests
         var result = _validator.Validate(transaction);
 
         result.IsValid.ShouldBeFalse();
-        result.Reason.ShouldBe(InvalidReason.INVALID_AMOUNT);
+        ((InvalidReason)result.Errors[0].CustomState).ShouldBe(InvalidReason.INVALID_AMOUNT);
     }
 
     [TestCase("US")]
@@ -93,7 +91,7 @@ public class TransactionValidatorTests
         var result = _validator.Validate(transaction);
 
         result.IsValid.ShouldBeFalse();
-        result.Reason.ShouldBe(InvalidReason.INVALID_CURRENCY);
+        ((InvalidReason)result.Errors[0].CustomState).ShouldBe(InvalidReason.INVALID_CURRENCY);
     }
 
     [TestCase("COMPLETED")]
@@ -108,7 +106,7 @@ public class TransactionValidatorTests
         var result = _validator.Validate(transaction);
 
         result.IsValid.ShouldBeFalse();
-        result.Reason.ShouldBe(InvalidReason.INVALID_STATUS);
+        ((InvalidReason)result.Errors[0].CustomState).ShouldBe(InvalidReason.INVALID_STATUS);
     }
 
     [TestCase("not-a-date")]
@@ -123,7 +121,7 @@ public class TransactionValidatorTests
         var result = _validator.Validate(transaction);
 
         result.IsValid.ShouldBeFalse();
-        result.Reason.ShouldBe(InvalidReason.INVALID_TIMESTAMP);
+        ((InvalidReason)result.Errors[0].CustomState).ShouldBe(InvalidReason.INVALID_TIMESTAMP);
     }
 
     [TestCase("SUCCESS")]

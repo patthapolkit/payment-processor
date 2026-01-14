@@ -1,4 +1,5 @@
 using PaymentProcessor.Core.Enums;
+using PaymentProcessor.Core.Mappers;
 using PaymentProcessor.Core.Models;
 using PaymentProcessor.Core.Validators;
 
@@ -6,7 +7,7 @@ namespace PaymentProcessor.Core.Services;
 
 public class TransactionProcessorService : ITransactionProcessorService
 {
-    private readonly TransactionValidator _validator = new();
+    private readonly TransactionDtoValidator _validator = new();
 
     public SummaryReport Process(List<TransactionDto> transactions)
     {
@@ -16,15 +17,18 @@ public class TransactionProcessorService : ITransactionProcessorService
         };
 
         var validTransactions = new List<Transaction>();
-        foreach (var result in transactions.Select(_validator.Validate))
+
+        foreach (var dto in transactions)
         {
+            var result = _validator.Validate(dto);
             if (result.IsValid)
             {
-                validTransactions.Add(result.Transaction!);
+                validTransactions.Add(dto.ToDomain());
             }
             else
             {
-                report.InvalidReasons[result.Reason.ToString()!]++;
+                var reason = (InvalidReason)result.Errors[0].CustomState;
+                report.InvalidReasons[reason.ToString()]++;
             }
         }
 
